@@ -18,14 +18,17 @@ async fn create_argument(request_json: web::Json<CreateArgumentRequest>,
         request.description,
         status
     )
-        .execute(&data.db_connection_pool)
+        .fetch_one(&data.db_connection_pool)
         .await;
     match db_response {
         Ok(db_argument) => {
             let argument_response: Argument = db_argument.into();
             HttpResponse::Created().json(argument_response)
-        }
-        Err(sqlx::Error::Database(err)) => {
+        },
+        Err(sqlx::Error::Database(err))  => {
+            HttpResponse::InternalServerError().finish()
+        },
+        Err(e)  => {
             HttpResponse::InternalServerError().finish()
         }
     }

@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Encode, Row};
-use std::error;
-use std::str::FromStr;
+use std::{error, fmt, str::FromStr};
 use sqlx::database::HasArguments;
 use sqlx::encode::IsNull;
 
@@ -22,14 +21,23 @@ impl ArgumentStatus {
     }
 }
 
-impl FromStr for ArgumentStatus {
-    type Err = ();
+#[derive(Debug, Clone)]
+pub struct ArgumentStatusParseError;
 
-    fn from_str(s: &str)-> Result<Self, self::Err> {
+impl fmt::Display for ArgumentStatusParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Failed to deserialize ArgumentStatus from string")
+    }
+}
+
+impl FromStr for ArgumentStatus {
+    type Err = ArgumentStatusParseError;
+
+    fn from_str(s: &str)-> Result<Self, Self::Err> {
         match s {
             "InProgress" => Ok(ArgumentStatus::InProgress),
             "NotchTaken" => Ok(ArgumentStatus::NotchTaken),
-            _ => self::Err("Failed to deserialize ArgumentStatus")
+            _ => Err(ArgumentStatusParseError)
         }
     }
 }
@@ -64,7 +72,7 @@ impl From<DBArgument> for Argument {
             argument_starter: item.argument_starter,
             dissenter: item.dissenter,
             description: item.description,
-            status: status_result.expect("Status failed to be parsed"), #TODO: handle this panic
+            status: status_result.expect("Status failed to be parsed"), //TODO: handle this panic
             notch_taker: item.notch_taker
         }
     }
