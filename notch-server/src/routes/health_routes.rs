@@ -1,5 +1,6 @@
 use actix_web::{get, Responder, web};
 use serde::Serialize;
+use crate::AppData;
 
 #[derive(Serialize)]
 struct HealthResponse<'a> {
@@ -11,7 +12,7 @@ const HEALTH_RESPONSE: HealthResponse = HealthResponse {
 };
 
 #[get("/health-check")]
-async fn health_check() -> impl Responder {
+async fn health_check(_data: AppData) -> impl Responder {
     web::Json(HEALTH_RESPONSE)
 }
 
