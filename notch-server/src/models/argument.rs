@@ -63,18 +63,18 @@ pub struct Argument {
     pub notch_taker: Option<i64>
 }
 
-impl From<DBArgument> for Argument {
-    fn from(item: DBArgument) -> Self {
+impl Argument {
+    pub(crate) fn from_db(item: DBArgument) -> Result<Argument, ArgumentStatusParseError> {
         let status_result = ArgumentStatus::from_str(&item.status);
-        Argument {
+        Ok(Argument {
             argument_id: item.argument_id,
             group_id: item.group_id,
             argument_starter: item.argument_starter,
             dissenter: item.dissenter,
             description: item.description,
-            status: status_result.expect("Status failed to be parsed"), //TODO: handle this panic
+            status: status_result?,
             notch_taker: item.notch_taker
-        }
+        })
     }
 }
 

@@ -22,8 +22,15 @@ async fn create_argument(request_json: web::Json<CreateArgumentRequest>,
         .await;
     match db_response {
         Ok(db_argument) => {
-            let argument_response: Argument = db_argument.into();
-            HttpResponse::Created().json(argument_response)
+            let argument_result = Argument::from_db(db_argument);
+            match argument_result {
+                Ok(argument_response) => {
+                    HttpResponse::Created().json(argument_response)
+                },
+                Err(e) => {
+                    HttpResponse::InternalServerError().finish()
+                }
+            }
         },
         Err(sqlx::Error::Database(err))  => {
             HttpResponse::InternalServerError().finish()
