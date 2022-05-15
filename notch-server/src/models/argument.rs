@@ -99,3 +99,9 @@ pub struct CreateArgumentRequest {
     pub dissenter: i64,
     pub description: String
 }
+
+
+#[derive(Deserialize)]
+pub struct GetArgumentsParams {
+    pub group_id: i64
+}

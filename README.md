@@ -4,8 +4,8 @@ Backend server for managing and tracking who won internet arguments
 
 #### API Routes
 - [x] `POST /arguments` create an argument
-- [ ] `GET /arguments?group_id={group_id}` get all arguments for the group
-- [ ] `GET /arguments/{argument_id}` - get argument with given id
+- [x] `GET /arguments?group_id={group_id}` get all arguments for the group
+- [x] `GET /arguments/{argument_id}` - get argument with given id
 - [ ] `PUT /arguments/{argument_id}` - update argument with given id
 
 
