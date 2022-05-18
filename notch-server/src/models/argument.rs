@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Encode, Row};
 use std::{error, fmt, str::FromStr};
+use serde::de::StdError;
 use sqlx::database::HasArguments;
 use sqlx::encode::IsNull;
 
@@ -28,6 +29,10 @@ impl fmt::Display for ArgumentStatusParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Failed to deserialize ArgumentStatus from string")
     }
+}
+
+impl StdError for ArgumentStatusParseError {
+
 }
 
 impl FromStr for ArgumentStatus {
@@ -92,12 +97,17 @@ impl<'a> FromRow<'a, SqliteRow> for DBArgument {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct CreateArgumentRequest {
     pub group_id: i64,
     pub argument_starter: i64,
     pub dissenter: i64,
     pub description: String
+}
+
+#[derive(Deserialize)]
+pub struct UpdateNotchTakerRequest {
+    pub notch_taker: i64
 }
 
 
