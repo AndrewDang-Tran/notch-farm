@@ -1,0 +1,20 @@
+[package]
+name = "notch-bot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies.serenity]
+version = "0.11.2"
+features = ["cache", "framework", "standard_framework", "rustls_backend"]
+
+[dependencies.tokio]
+version = "1.18.2"
+features = ["macros", "signal", "rt-multi-thread"]
+
+[dependencies]
+sqlx = { version = "0.5.13", features=["sqlite", "runtime-actix-rustls"] }
+tracing = "0.1.23"
+tracing-subscriber = "0.2"
+dotenv = "0.15"
