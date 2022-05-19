@@ -24,7 +24,7 @@ use serenity::model::gateway::Ready;
 use serenity::prelude::*;
 use tracing::{error, info};
 
-use crate::commands::math::*;
+use crate::commands::notch::*;
 
 pub struct ShardManagerContainer;
 
@@ -32,7 +32,9 @@ impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<Mutex<ShardManager>>;
 }
 
-struct Handler;
+struct Handler {
+    database: sqlx::SqlitePool
+};
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -46,7 +48,7 @@ impl EventHandler for Handler {
 }
 
 #[group]
-#[commands(multiply)]
+#[commands(notch)]
 struct General;
 
 #[tokio::main]
@@ -61,8 +63,20 @@ async fn main() {
     // `RUST_LOG` to `debug`.
     tracing_subscriber::fmt::init();
 
-    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
+    // Initiate a connection to the database file, creating the file if required.
+    let database = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect_with(
+            sqlx::sqlite::SqliteConnectOptions::new()
+                .filename("notch-db.sqlite")
+                .create_if_missing(true),
+        )
+        .await
+        .expect("Couldn't connect to database");
+    sqlx::migrate!("./migrations").run(&database).await.expect("Couldn't run database migrations");
 
+
+    let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let http = Http::new(&token);
 
     // We will fetch your bot's owners and id
@@ -78,14 +92,21 @@ async fn main() {
 
     // Create the framework
     let framework =
-        StandardFramework::new().configure(|c| c.owners(owners).prefix("~")).group(&GENERAL_GROUP);
+        StandardFramework::new()
+            .configure(|c| c.owners(owners).prefix("~"))
+            .group(&GENERAL_GROUP);
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
+
+    let bot_state = Handler {
+        database
+    };
+
     let mut client = Client::builder(&token, intents)
         .framework(framework)
-        .event_handler(Handler)
+        .event_handler(bot_state)
         .await
         .expect("Err creating client");
 
