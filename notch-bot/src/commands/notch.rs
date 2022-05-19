@@ -29,30 +29,36 @@ impl NotchSubcommand {
 }
 
 #[command]
+#[sub_commands(help, argument)]
 pub async fn notch(context: &Context, message: &Message, mut args: Args) -> CommandResult {
-    let subcommand_s = args.single::<String>()?;
+    /*let subcommand_s = args.single::<String>()?;
     let subcommand = NotchSubcommand::as_command(&subcommand_s);
     match subcommand {
         NotchSubcommand::Help => help(context, message).await,
         NotchSubcommand::Argument => argument(context, message).await
-    }
+    }*/
+    Ok(())
 }
 
 
 const HELP_MESSAGE: &str = r#"
 Commands
-`argument @user1 "description"` - Starts an internet argument between you and chosen other user
+`argument @user1 "description"` - Starts an internet argument between you and the mentioned user
 `arguments` - Shows all open internet arguments
 `take-your-notch {argument_id}` - gives the notch to the opposing party
 `leaderboard` - Shows ordered list of user notch counts
 "#;
 
+#[command]
+#[description("Generates help text")]
 async fn help(context: &Context, message: &Message) -> CommandResult {
     message.channel_id.say(&context.http, HELP_MESSAGE).await?;
     Ok(())
 }
 
 const MISSING_DISSENTER: &str = "You can't earn a notch without mentioning someone to argue with";
+#[command]
+#[description("Starts an internet argument between you and the mentioned user")]
 pub async fn argument(context: &Context, message: &Message) -> CommandResult {
     if message.mentions.len() != 1 {
         message.channel_id.say(&context.http, MISSING_DISSENTER).await?;

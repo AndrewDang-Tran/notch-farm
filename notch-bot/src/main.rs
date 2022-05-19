@@ -34,7 +34,7 @@ impl TypeMapKey for ShardManagerContainer {
 
 struct Handler {
     database: sqlx::SqlitePool
-};
+}
 
 #[async_trait]
 impl EventHandler for Handler {
