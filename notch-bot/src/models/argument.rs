@@ -29,10 +29,6 @@ impl fmt::Display for ArgumentStatusParseError {
     }
 }
 
-impl StdError for ArgumentStatusParseError {
-
-}
-
 impl FromStr for ArgumentStatus {
     type Err = ArgumentStatusParseError;
 
