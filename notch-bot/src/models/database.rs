@@ -6,5 +6,5 @@ use tokio::sync::RwLock;
 pub struct DBConnection;
 
 impl TypeMapKey for DBConnection {
-    type Value = Arc<RwLock<SqlitePool>>;
+    type Value = Arc<SqlitePool>;
 }

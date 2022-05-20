@@ -111,7 +111,7 @@ async fn main() {
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(client.shard_manager.clone());
-        data.insert::<DBConnection>(Arc::new(RwLock::new(database)));
+        data.insert::<DBConnection>(Arc::new(database));
     }
 
     let shard_manager = client.shard_manager.clone();

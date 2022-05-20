@@ -72,10 +72,9 @@ pub async fn argument(context: &Context, message: &Message, mut args: Args) -> C
     let dissenter : &User = message.mentions.get(0).expect("Should have guaranteed mention");
     let description = args.single_quoted::<String>().expect("should have description");
     let mut data = context.data.write().await;
-    let db_lock  = data.get_mut::<DBConnection>()
+    let database  = &*data.get_mut::<DBConnection>()
                          .expect("Unable to get db connection in command")
                          .clone();
-    let write_connection = &*db_lock.write().await;
 
     let status = ArgumentStatus::InProgress.as_str().to_string();
     let guild_id_u64 = i64::from(guild_id);
@@ -92,7 +91,7 @@ pub async fn argument(context: &Context, message: &Message, mut args: Args) -> C
         description,
         status
     )
-        .fetch_one(write_connection)
+        .fetch_one(database)
         .await;
 
     match db_response {
