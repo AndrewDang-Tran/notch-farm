@@ -8,8 +8,6 @@
 //! git = "https://github.com/serenity-rs/serenity.git"
 //! features = ["framework", "standard_framework"]
 //! ```
-mod commands;
-
 use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
@@ -22,9 +20,14 @@ use serenity::http::Http;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
+use sqlx::SqlitePool;
 use tracing::{error, info};
 
 use crate::commands::notch::*;
+use crate::models::database::DBConnection;
+
+mod commands;
+mod models;
 
 pub struct ShardManagerContainer;
 
@@ -32,9 +35,8 @@ impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<Mutex<ShardManager>>;
 }
 
-struct Handler {
-    database: sqlx::SqlitePool
-}
+
+struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -100,19 +102,16 @@ async fn main() {
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT;
 
-    let bot_state = Handler {
-        database
-    };
-
     let mut client = Client::builder(&token, intents)
         .framework(framework)
-        .event_handler(bot_state)
+        .event_handler(Handler)
         .await
         .expect("Err creating client");
 
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(client.shard_manager.clone());
+        data.insert::<DBConnection>(Arc::new(RwLock::new(database)));
     }
 
     let shard_manager = client.shard_manager.clone();
