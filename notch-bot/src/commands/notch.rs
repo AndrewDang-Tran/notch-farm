@@ -46,6 +46,7 @@ pub async fn argument(context: &Context, message: &Message, mut args: Args) -> C
 
     let argument_starter : &User = &message.author;
     let dissenter : &User = message.mentions.get(0).expect("Should have guaranteed mention");
+    let _discard = args.single::<String>().expect("Should have dissenter mentioned");
     let description = args.single_quoted::<String>().expect("should have description");
     let mut data = context.data.write().await;
     let database  = &*data.get_mut::<DBConnection>()
