@@ -20,7 +20,6 @@ use serenity::http::Http;
 use serenity::model::event::ResumedEvent;
 use serenity::model::gateway::Ready;
 use serenity::prelude::*;
-use sqlx::SqlitePool;
 use tracing::{error, info};
 
 use crate::commands::notch::*;

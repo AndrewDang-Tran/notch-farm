@@ -1,34 +1,10 @@
-use serenity::framework::standard::macros::command;
 use serenity::framework::standard::{Args, CommandResult};
+use serenity::framework::standard::macros::command;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
-use crate::models::database::DBConnection;
+
 use crate::models::argument::{ArgumentStatus, DBArgument};
-
-const HELP: &str = "help";
-const ARGUMENT: &str = "argument";
-enum NotchSubcommand {
-    Help,
-    Argument,
-}
-
-impl NotchSubcommand {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            NotchSubcommand::Help => HELP,
-            NotchSubcommand::Argument => ARGUMENT
-        }
-    }
-
-    pub fn as_command(s: &str) -> NotchSubcommand {
-        let clean_s = &s.to_lowercase();
-        match clean_s.as_str() {
-            HELP => NotchSubcommand::Help,
-            ARGUMENT => NotchSubcommand::Argument,
-            _ => NotchSubcommand::Help
-        }
-    }
-}
+use crate::models::database::DBConnection;
 
 #[command]
 #[sub_commands(help, argument)]
@@ -101,7 +77,7 @@ pub async fn argument(context: &Context, message: &Message, mut args: Args) -> C
                    .await?;
             Ok(())
         },
-        Err(e)  => {
+        Err(_e)  => {
             message.channel_id.say(&context.http, "Failed to create argument")
                    .await?;
             Ok(())

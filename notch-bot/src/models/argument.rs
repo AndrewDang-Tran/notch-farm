@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
-use sqlx::{FromRow, Encode, Row};
-use std::{error, fmt, str::FromStr};
+use sqlx::{FromRow, Row};
+use std::{fmt, str::FromStr};
 use serde::de::StdError;
-use sqlx::database::HasArguments;
-use sqlx::encode::IsNull;
 
 
 #[derive(Serialize, Deserialize)]
