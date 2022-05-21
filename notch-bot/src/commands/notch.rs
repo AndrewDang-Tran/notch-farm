@@ -147,14 +147,14 @@ pub async fn list_arguments(context: &Context, message: &Message, _args: Args) -
                     Ok(())
                 },
                 Err(e) => {
-                    message.channel_id.say(&context.http, "failed to create argument")
+                    message.channel_id.say(&context.http, "Failed to parse arguments")
                            .await?;
                     Ok(())
                 }
             }
         },
         Err(e)  => {
-            message.channel_id.say(&context.http, "Failed to create argument")
+            message.channel_id.say(&context.http, "Failed to read arguments")
                    .await?;
             Ok(())
         }
