@@ -101,3 +101,8 @@ pub struct CreateArgumentParams {
     pub dissenter_id: UserId,
     pub description: String
 }
+
+pub struct UpdateNotchTakerParams {
+    pub argument_id: i64,
+    pub notch_taker: UserId,
+}

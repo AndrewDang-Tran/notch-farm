@@ -5,7 +5,7 @@ use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
 
 use crate::dao;
-use crate::models::argument::{Argument, ArgumentStatusParseError, CreateArgumentParams, DBArgument};
+use crate::models::argument::{Argument, ArgumentStatusParseError, CreateArgumentParams, DBArgument, UpdateNotchTakerParams};
 use crate::models::database::DBConnection;
 
 #[command]
@@ -118,10 +118,56 @@ pub async fn list_arguments(context: &Context, message: &Message, _args: Args) -
     }
 }
 
+const FAILED_TO_GET_ARGUMENT: &str = "Failed to find the argument";
+const NOT_PART_OF_ARGUMENT: &str = "You can only give notches if you're part of the argument";
+const NOTCH_ALREADY_TAKEN: &str = "Notch for this argument already taken";
 #[command]
 #[aliases("take-your-notch")]
-pub async fn take_your_notch(context: &Context, message: &Message, _args: Args) -> CommandResult {
-    Ok(())
+pub async fn take_your_notch(context: &Context, message: &Message, mut args: Args) -> CommandResult {
+    let notch_giver_id = message.author.id.as_u64();
+    let argument_id = args.single::<i64>().expect("Must provide argument_id");
+    let argument_result = dao::get_argument(context, argument_id).await;
+
+    match argument_result {
+        Err(e) => {
+            message.channel_id.say(&context.http, FAILED_TO_GET_ARGUMENT).await?;
+            Ok(())
+        },
+        Ok(argument) => {
+            let argument_taken = argument.notch_taker_id.is_some();
+            if argument_taken {
+                message.channel_id.say(&context.http, NOTCH_ALREADY_TAKEN).await?;
+                Ok(())
+            } else {
+                let mut notch_taker_id: Option<u64> = None;
+                if *notch_giver_id == argument.argument_starter_id as u64 {
+                    notch_taker_id = Some(argument.dissenter_id as u64)
+                } else if *notch_giver_id == argument.dissenter_id as u64 {
+                    notch_taker_id = Some(argument.argument_starter_id as u64)
+                }
+                match notch_taker_id {
+                    Some(id) => {
+                        let params = UpdateNotchTakerParams {
+                            argument_id,
+                            notch_taker: UserId::from(id)
+                        };
+                        dao::update_notch_taker(context, params).await?;
+                        let confirmation = MessageBuilder::new()
+                            .user(UserId::from(*notch_giver_id))
+                            .push(" has given the notch to ")
+                            .user(UserId::from(id))
+                            .build();
+                        message.channel_id.say(&context.http, confirmation).await?;
+                        Ok(())
+                    },
+                    None => {
+                        message.channel_id.say(&context.http, NOT_PART_OF_ARGUMENT).await?;
+                        Ok(())
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[command]

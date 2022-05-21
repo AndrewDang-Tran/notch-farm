@@ -1,10 +1,11 @@
 use std::error::Error;
 use serenity::client::Context;
-use serenity::model::id::GuildId;
+use serenity::model::id::{GuildId, UserId};
 use crate::models::database::DBConnection;
-use crate::models::argument::{Argument, ArgumentStatus, ArgumentStatusParseError, CreateArgumentParams, DBArgument};
+use crate::models::argument::{Argument, ArgumentStatus, ArgumentStatusParseError, CreateArgumentParams, DBArgument, UpdateNotchTakerParams};
 
-pub async fn create_argument(context: &Context, params: CreateArgumentParams) -> Result<Argument, Box<dyn Error + Send + Sync>> {
+pub async fn create_argument(context: &Context, params: CreateArgumentParams)
+                             -> Result<Argument, Box<dyn Error + Send + Sync>> {
     let mut data = context.data.write().await;
     let database  = &*data.get_mut::<DBConnection>()
                           .expect("Unable to get db connection in command")
@@ -28,18 +29,32 @@ pub async fn create_argument(context: &Context, params: CreateArgumentParams) ->
         .fetch_one(database)
         .await;
 
-    match db_response {
-        Ok(db_argument) => {
-            match Argument::from_db(db_argument) {
-                Ok(a) => Ok(a),
-                Err(e) => Err(Box::new(e))
-            }
-        },
-        Err(e)  => Err(Box::new(e))
-    }
+    db_response_to_argument(db_response)
 }
 
-pub async fn get_arguments(context: &Context, guild_id: GuildId) -> Result<Vec<Argument>, Box<dyn Error + Send + Sync>> {
+pub async fn get_argument(context: &Context, argument_id: i64)
+                          -> Result<Argument, Box<dyn Error + Send + Sync>> {
+    let mut data = context.data.write().await;
+    let database  = &*data.get_mut::<DBConnection>()
+                          .expect("Unable to get db connection in command")
+                          .clone();
+
+    let db_response = sqlx::query_as!(
+        DBArgument,
+        r#"SELECT
+        argument_id, guild_id, argument_starter_id, dissenter_id, description, status, notch_taker_id
+        FROM arguments
+        WHERE argument_id = $1"#,
+        argument_id
+    )
+        .fetch_one(database) // TODO: switch to getting optional and 404
+        .await;
+
+    db_response_to_argument(db_response)
+}
+
+pub async fn get_arguments(context: &Context, guild_id: GuildId)
+                           -> Result<Vec<Argument>, Box<dyn Error + Send + Sync>> {
     let mut data = context.data.write().await;
     let database  = &*data.get_mut::<DBConnection>()
                           .expect("Unable to get db connection in command")
@@ -70,5 +85,43 @@ pub async fn get_arguments(context: &Context, guild_id: GuildId) -> Result<Vec<A
             }
         },
         Err(e) => Err(Box::new(e))
+    }
+}
+
+pub async fn update_notch_taker(context: &Context, params: UpdateNotchTakerParams)
+                                -> Result<Argument, Box<dyn Error + Send + Sync>> {
+    let mut data = context.data.write().await;
+    let database  = &*data.get_mut::<DBConnection>()
+                          .expect("Unable to get db connection in command")
+                          .clone();
+
+    let notch_taken_status = ArgumentStatus::NotchTaken.as_str().to_string();
+    let notch_taker = i64::from(params.notch_taker);
+    let db_response = sqlx::query_as!(
+        DBArgument,
+        r#"UPDATE arguments
+        SET notch_taker_id = $1, status = $2
+        WHERE argument_id = $3
+        RETURNING *"#,
+        notch_taker,
+        notch_taken_status,
+        params.argument_id,
+    )
+        .fetch_one(database) // TODO: switch to getting optional and 404
+        .await;
+
+    db_response_to_argument(db_response)
+}
+
+fn db_response_to_argument(db_response: Result<DBArgument, sqlx::Error>)
+    -> Result<Argument, Box<dyn Error + Send + Sync>> {
+    match db_response {
+        Ok(db_argument) => {
+            match Argument::from_db(db_argument) {
+                Ok(a) => Ok(a),
+                Err(e) => Err(Box::new(e))
+            }
+        },
+        Err(e)  => Err(Box::new(e))
     }
 }
