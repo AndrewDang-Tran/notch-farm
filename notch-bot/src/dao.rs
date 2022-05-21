@@ -53,7 +53,7 @@ pub async fn get_argument(context: &Context, argument_id: i64)
     db_response_to_argument(db_response)
 }
 
-pub async fn get_arguments(context: &Context, guild_id: GuildId)
+pub async fn get_open_arguments(context: &Context, guild_id: GuildId)
                            -> Result<Vec<Argument>, Box<dyn Error + Send + Sync>> {
     let mut data = context.data.write().await;
     let database  = &*data.get_mut::<DBConnection>()
@@ -61,13 +61,15 @@ pub async fn get_arguments(context: &Context, guild_id: GuildId)
                           .clone();
 
     let guild_id = i64::from(guild_id);
+    let in_progress = ArgumentStatus::InProgress.as_str().to_string();
     let db_response: Result<Vec<DBArgument>, sqlx::Error> = sqlx::query_as!(
         DBArgument,
         r#"SELECT
         argument_id, guild_id, argument_starter_id, dissenter_id, description, status, notch_taker_id
         FROM arguments
-        WHERE guild_id = $1"#,
-        guild_id
+        WHERE guild_id = $1 AND status = $2"#,
+        guild_id,
+        in_progress
     )
         .fetch_all(database)
         .await;

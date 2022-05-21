@@ -78,7 +78,7 @@ pub async fn argument(context: &Context, message: &Message, mut args: Args) -> C
 #[aliases("arguments")]
 pub async fn list_arguments(context: &Context, message: &Message, _args: Args) -> CommandResult {
     let guild_id= message.guild_id.expect("Should have guaranteed guild_id");
-    let arguments_result = dao::get_arguments(context, guild_id).await;
+    let arguments_result = dao::get_open_arguments(context, guild_id).await;
 
     match arguments_result {
         Ok(arguments) => {
