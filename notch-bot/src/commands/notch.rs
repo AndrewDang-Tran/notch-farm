@@ -9,7 +9,7 @@ use crate::models::argument::{Argument, ArgumentStatusParseError, CreateArgument
 use crate::models::database::DBConnection;
 
 #[command]
-#[sub_commands(help, argument, list_arguments)]
+#[sub_commands(help, argument, list_arguments, take_your_notch, leaderboard)]
 pub async fn notch(context: &Context, message: &Message, args: Args) -> CommandResult {
     help(context, message, args).await
 }
@@ -116,4 +116,15 @@ pub async fn list_arguments(context: &Context, message: &Message, _args: Args) -
             Ok(())
         }
     }
+}
+
+#[command]
+#[aliases("take-your-notch")]
+pub async fn take_your_notch(context: &Context, message: &Message, _args: Args) -> CommandResult {
+    Ok(())
+}
+
+#[command]
+pub async fn leaderboard(context: &Context, message: &Message, _args: Args) -> CommandResult {
+    Ok(())
 }
