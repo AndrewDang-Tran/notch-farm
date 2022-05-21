@@ -4,8 +4,9 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
 
-use crate::models::argument::{Argument, ArgumentStatus, ArgumentStatusParseError, DBArgument};
+use crate::models::argument::{Argument, ArgumentStatusParseError, CreateArgumentParams, DBArgument};
 use crate::models::database::DBConnection;
+use crate::dao;
 
 #[command]
 #[sub_commands(help, argument, list_arguments)]
@@ -50,33 +51,18 @@ pub async fn argument(context: &Context, message: &Message, mut args: Args) -> C
     // TODO: https://docs.rs/serenity/latest/serenity/utils/fn.parse_username.html
     let _discard = args.single::<String>().expect("Should have dissenter mentioned");
     let description = args.single_quoted::<String>().expect("should have description");
-    let mut data = context.data.write().await;
-    let database  = &*data.get_mut::<DBConnection>()
-                         .expect("Unable to get db connection in command")
-                         .clone();
+    let params = CreateArgumentParams {
+        guild_id,
+        argument_starter_id: argument_starter.id,
+        dissenter_id: dissenter.id,
+        description
+    };
+    let created_argument = dao::create_argument(context, params).await;
 
-    let status = ArgumentStatus::InProgress.as_str().to_string();
-    let guild_id_u64 = i64::from(guild_id);
-    let argument_starter_id = i64::from(argument_starter.id);
-    let dissenter_id = i64::from(dissenter.id);
-    let db_response = sqlx::query_as!(
-        DBArgument,
-        r#"INSERT INTO arguments
-        (guild_id, argument_starter_id, dissenter_id, description, status)
-        values ($1, $2, $3, $4, $5) RETURNING *"#,
-        guild_id_u64,
-        argument_starter_id,
-        dissenter_id,
-        description,
-        status
-    )
-        .fetch_one(database)
-        .await;
-
-    match db_response {
-        Ok(db_argument) => {
+    match created_argument {
+        Ok(argument) => {
             message.channel_id.say(&context.http,
-                                   format!("argument created with id: {}", db_argument.argument_id))
+                                   format!("argument created with id: {}", argument.argument_id))
                    .await?;
             Ok(())
         },

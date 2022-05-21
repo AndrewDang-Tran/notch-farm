@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
 use std::{fmt, str::FromStr};
+use std::error::Error;
 use serde::de::StdError;
+use serenity::model::id::{GuildId, UserId};
 
 
 #[derive(Serialize, Deserialize)]
@@ -23,6 +25,7 @@ impl ArgumentStatus {
 #[derive(Debug, Clone)]
 pub struct ArgumentStatusParseError;
 
+impl StdError for ArgumentStatusParseError {}
 impl fmt::Display for ArgumentStatusParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Failed to deserialize ArgumentStatus from string")
@@ -40,6 +43,7 @@ impl FromStr for ArgumentStatus {
         }
     }
 }
+
 
 pub struct DBArgument {
     pub argument_id: i64,
@@ -89,4 +93,11 @@ impl<'a> FromRow<'a, SqliteRow> for DBArgument {
             notch_taker_id: row.get(6)
         })
     }
+}
+
+pub struct CreateArgumentParams {
+    pub guild_id: GuildId,
+    pub argument_starter_id: UserId,
+    pub dissenter_id: UserId,
+    pub description: String
 }

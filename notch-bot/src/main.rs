@@ -27,6 +27,7 @@ use crate::models::database::DBConnection;
 
 mod commands;
 mod models;
+mod dao;
 
 pub struct ShardManagerContainer;
 
