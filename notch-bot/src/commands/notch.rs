@@ -4,9 +4,9 @@ use serenity::model::prelude::*;
 use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
 
+use crate::dao;
 use crate::models::argument::{Argument, ArgumentStatusParseError, CreateArgumentParams, DBArgument};
 use crate::models::database::DBConnection;
-use crate::dao;
 
 #[command]
 #[sub_commands(help, argument, list_arguments)]
@@ -77,70 +77,41 @@ pub async fn argument(context: &Context, message: &Message, mut args: Args) -> C
 #[command]
 #[aliases("arguments")]
 pub async fn list_arguments(context: &Context, message: &Message, _args: Args) -> CommandResult {
-    let mut data = context.data.write().await;
-    let database  = &*data.get_mut::<DBConnection>()
-                          .expect("Unable to get db connection in command")
-                          .clone();
+    let guild_id= message.guild_id.expect("Should have guaranteed guild_id");
+    let arguments_result = dao::get_arguments(context, guild_id).await;
 
-    let guild_id_option= message.guild_id;
-    let guild_id = i64::from(guild_id_option.expect("Should have guaranteed guild_id"));
-    let db_response = sqlx::query_as!(
-        DBArgument,
-        r#"SELECT
-        argument_id, guild_id, argument_starter_id, dissenter_id, description, status, notch_taker_id
-        FROM arguments
-        WHERE guild_id = $1"#,
-        guild_id
-    )
-        .fetch_all(database)
-        .await;
-
-    match db_response {
-        Ok(db_arguments) => {
-            let argument_results =
-                db_arguments.into_iter()
-                            .map(|db_a| Argument::from_db(db_a))
-                            .collect::<Result<Vec<Argument>, ArgumentStatusParseError>>();
-
-            match argument_results {
-                Ok(arguments) => {
-                    let mut arguments_message = MessageBuilder::new()
-                        .push_bold_line("Arguments:")
-                        .build();
-                    for argument in arguments {
-                        let argument_starter = context.http
-                                                      .get_user(argument.argument_starter_id.unsigned_abs())
-                                                      .await
-                                                      .expect("Failed to get argument starter");
-                        let dissenter = context.http
-                                               .get_user(argument.dissenter_id.unsigned_abs())
-                                               .await
-                                               .expect("Failed to get dissenter");
-                        let partial = MessageBuilder::new().push("Argument id: ")
-                                                           .push(argument.argument_id)
-                                                           .push(" between ")
-                                                           .push(&argument_starter.name)
-                                                           .push(" and ")
-                                                           .push(&dissenter.name)
-                                                           .push_line(" about")
-                                                           .push_codeblock(&argument.description, None)
-                                                           .build();
-                        arguments_message = arguments_message + &partial;
-                    }
-                    message.channel_id.say(&context.http,
-                                           arguments_message)
-                           .await?;
-                    Ok(())
-                },
-                Err(e) => {
-                    message.channel_id.say(&context.http, "Failed to parse arguments")
-                           .await?;
-                    Ok(())
-                }
+    match arguments_result {
+        Ok(arguments) => {
+            let mut arguments_message = MessageBuilder::new()
+                .push_bold_line("Arguments:")
+                .build();
+            for argument in arguments {
+                let argument_starter = context.http
+                                              .get_user(argument.argument_starter_id.unsigned_abs())
+                                              .await
+                                              .expect("Failed to get argument starter");
+                let dissenter = context.http
+                                       .get_user(argument.dissenter_id.unsigned_abs())
+                                       .await
+                                       .expect("Failed to get dissenter");
+                let partial = MessageBuilder::new().push("Argument id: ")
+                                                   .push(argument.argument_id)
+                                                   .push(" between ")
+                                                   .push(&argument_starter.name)
+                                                   .push(" and ")
+                                                   .push(&dissenter.name)
+                                                   .push_line(" about")
+                                                   .push_codeblock(&argument.description, None)
+                                                   .build();
+                arguments_message = arguments_message + &partial;
             }
+            message.channel_id.say(&context.http,
+                                   arguments_message)
+                   .await?;
+            Ok(())
         },
-        Err(e)  => {
-            message.channel_id.say(&context.http, "Failed to read arguments")
+        Err(_e) => {
+            message.channel_id.say(&context.http, "Failed to parse arguments")
                    .await?;
             Ok(())
         }
