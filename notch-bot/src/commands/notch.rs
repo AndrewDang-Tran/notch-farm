@@ -17,10 +17,10 @@ pub async fn notch(context: &Context, message: &Message, args: Args) -> CommandR
 
 const HELP_MESSAGE: &str = r#"
 Commands
-`argument @user1 "description"` - Starts an internet argument between you and the mentioned user
-`arguments` - Shows all open internet arguments
-`take-your-notch {argument_id}` - gives the notch to the opposing party
-`leaderboard` - Shows ordered list of user notch counts
+`~notch argument @user1 "description"` - Starts an internet argument between you and the mentioned user
+`~notch arguments` - Shows all open internet arguments
+`~notch take-your-notch {argument_id}` - gives the notch to the opposing party
+`~notch leaderboard` - Shows ordered list of user notch counts
 "#;
 
 #[command]
