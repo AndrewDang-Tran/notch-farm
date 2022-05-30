@@ -1,10 +1,9 @@
+use serde::de::StdError;
 use serde::{Deserialize, Serialize};
+use serenity::model::id::{GuildId, UserId};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
 use std::{fmt, str::FromStr};
-use serde::de::StdError;
-use serenity::model::id::{GuildId, UserId};
-
 
 #[derive(Serialize, Deserialize)]
 pub enum ArgumentStatus {
@@ -16,7 +15,7 @@ impl ArgumentStatus {
     pub fn as_str(&self) -> &'static str {
         match self {
             ArgumentStatus::InProgress => "InProgress",
-            ArgumentStatus::NotchTaken => "NotchTaken"
+            ArgumentStatus::NotchTaken => "NotchTaken",
         }
     }
 }
@@ -34,15 +33,14 @@ impl fmt::Display for ArgumentStatusParseError {
 impl FromStr for ArgumentStatus {
     type Err = ArgumentStatusParseError;
 
-    fn from_str(s: &str)-> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "InProgress" => Ok(ArgumentStatus::InProgress),
             "NotchTaken" => Ok(ArgumentStatus::NotchTaken),
-            _ => Err(ArgumentStatusParseError)
+            _ => Err(ArgumentStatusParseError),
         }
     }
 }
-
 
 pub struct DBArgument {
     pub argument_id: i64,
@@ -51,7 +49,7 @@ pub struct DBArgument {
     pub dissenter_id: i64,
     pub description: String,
     pub status: String,
-    pub notch_taker_id: Option<i64>
+    pub notch_taker_id: Option<i64>,
 }
 
 #[derive(Serialize)]
@@ -62,7 +60,7 @@ pub struct Argument {
     pub dissenter_id: i64,
     pub description: String,
     pub status: ArgumentStatus,
-    pub notch_taker_id: Option<i64>
+    pub notch_taker_id: Option<i64>,
 }
 
 impl Argument {
@@ -75,7 +73,7 @@ impl Argument {
             dissenter_id: item.dissenter_id,
             description: item.description,
             status: status_result?,
-            notch_taker_id: item.notch_taker_id
+            notch_taker_id: item.notch_taker_id,
         })
     }
 }
@@ -89,7 +87,7 @@ impl<'a> FromRow<'a, SqliteRow> for DBArgument {
             dissenter_id: row.get(3),
             description: row.get(4),
             status: row.get(5),
-            notch_taker_id: row.get(6)
+            notch_taker_id: row.get(6),
         })
     }
 }
@@ -98,7 +96,7 @@ pub struct CreateArgumentParams {
     pub guild_id: GuildId,
     pub argument_starter_id: UserId,
     pub dissenter_id: UserId,
-    pub description: String
+    pub description: String,
 }
 
 pub struct UpdateNotchTakerParams {

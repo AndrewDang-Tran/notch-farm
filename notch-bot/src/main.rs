@@ -26,15 +26,14 @@ use crate::commands::notch::*;
 use crate::models::database::DBConnection;
 
 mod commands;
-mod models;
 mod dao;
+mod models;
 
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<Mutex<ShardManager>>;
 }
-
 
 struct Handler;
 
@@ -75,8 +74,10 @@ async fn main() {
         )
         .await
         .expect("Couldn't connect to database");
-    sqlx::migrate!("./migrations").run(&database).await.expect("Couldn't run database migrations");
-
+    sqlx::migrate!("./migrations")
+        .run(&database)
+        .await
+        .expect("Couldn't run database migrations");
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
     let http = Http::new(&token);
@@ -88,15 +89,14 @@ async fn main() {
             owners.insert(info.owner.id);
 
             (owners, info.id)
-        },
+        }
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
     // Create the framework
-    let framework =
-        StandardFramework::new()
-            .configure(|c| c.owners(owners).prefix("~"))
-            .group(&GENERAL_GROUP);
+    let framework = StandardFramework::new()
+        .configure(|c| c.owners(owners).prefix("~"))
+        .group(&GENERAL_GROUP);
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
@@ -117,7 +117,9 @@ async fn main() {
     let shard_manager = client.shard_manager.clone();
 
     tokio::spawn(async move {
-        tokio::signal::ctrl_c().await.expect("Could not register ctrl+c handler");
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Could not register ctrl+c handler");
         shard_manager.lock().await.shutdown_all().await;
     });
 
