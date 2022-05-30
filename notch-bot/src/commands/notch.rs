@@ -215,7 +215,7 @@ pub async fn leaderboard(context: &Context, message: &Message, _args: Args) -> C
                 .into_iter()
                 .into_group_map_by(|a| a.notch_taker_id)
                 .into_iter()
-                .filter(|(id, t_arguments)| id.is_some())
+                .filter(|(id, _)| id.is_some())
                 .map(|(id, t_arguments)| (id.unwrap(), t_arguments.len()))
                 .sorted_by(|a, b| Ord::cmp(&b.1, &a.1))
                 .collect::<Vec<(i64, usize)>>();
