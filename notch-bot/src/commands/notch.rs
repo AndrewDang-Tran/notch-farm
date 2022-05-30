@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use serenity::framework::standard::{Args, CommandResult};
 use serenity::framework::standard::macros::command;
 use serenity::model::prelude::*;
@@ -5,8 +6,7 @@ use serenity::prelude::*;
 use serenity::utils::MessageBuilder;
 
 use crate::dao;
-use crate::models::argument::{Argument, ArgumentStatusParseError, CreateArgumentParams, DBArgument, UpdateNotchTakerParams};
-use crate::models::database::DBConnection;
+use crate::models::argument::{CreateArgumentParams, UpdateNotchTakerParams};
 
 #[command]
 #[sub_commands(help, argument, list_arguments, take_your_notch, leaderboard)]
@@ -129,7 +129,7 @@ pub async fn take_your_notch(context: &Context, message: &Message, mut args: Arg
     let argument_result = dao::get_argument(context, argument_id).await;
 
     match argument_result {
-        Err(e) => {
+        Err(_e) => {
             message.channel_id.say(&context.http, FAILED_TO_GET_ARGUMENT).await?;
             Ok(())
         },
@@ -172,5 +172,34 @@ pub async fn take_your_notch(context: &Context, message: &Message, mut args: Arg
 
 #[command]
 pub async fn leaderboard(context: &Context, message: &Message, _args: Args) -> CommandResult {
-    Ok(())
+    let guild_id = message.guild_id.expect("Command must be sent in guild");
+    let taken_arguments = dao::get_taken_arguments(context, guild_id).await;
+    match taken_arguments {
+        Ok(arguments) => {
+            let stats: Vec<(i64, usize)> = arguments.into_iter()
+                                                    .into_group_map_by(|a| a.notch_taker_id)
+                                                    .into_iter()
+                                                    .filter(|(id, t_arguments)| id.is_some())
+                                                    .map(|(id, t_arguments)| (id.unwrap(), t_arguments.len()))
+                                                    .sorted_by(|a, b| Ord::cmp(&b.1, &a.1))
+                                                    .collect::<Vec<(i64, usize)>>();
+
+            let mut leaderboard = "Notch Leaderboard\n".to_string();
+            for (user_id, notch_count) in stats {
+                let user = UserId::from(user_id as u64).to_user(&context.http).await?;
+                let row = MessageBuilder::new()
+                    .push(user.name)
+                    .push(" : ")
+                    .push_line(notch_count.to_string())
+                    .build();
+                leaderboard += &row;
+            }
+            message.channel_id.say(&context.http, leaderboard).await?;
+            Ok(())
+        },
+        Err(_e) => {
+            message.channel_id.say(&context.http, "Failed to get taken arguments").await?;
+            Ok(())
+        }
+    }
 }

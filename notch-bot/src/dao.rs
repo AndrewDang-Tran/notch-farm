@@ -1,6 +1,6 @@
 use std::error::Error;
 use serenity::client::Context;
-use serenity::model::id::{GuildId, UserId};
+use serenity::model::id::GuildId;
 use crate::models::database::DBConnection;
 use crate::models::argument::{Argument, ArgumentStatus, ArgumentStatusParseError, CreateArgumentParams, DBArgument, UpdateNotchTakerParams};
 
@@ -55,13 +55,23 @@ pub async fn get_argument(context: &Context, argument_id: i64)
 
 pub async fn get_open_arguments(context: &Context, guild_id: GuildId)
                            -> Result<Vec<Argument>, Box<dyn Error + Send + Sync>> {
+    get_arguments(context, guild_id, ArgumentStatus::InProgress).await
+}
+
+pub async fn get_taken_arguments(context: &Context, guild_id: GuildId)
+                                  -> Result<Vec<Argument>, Box<dyn Error + Send + Sync>> {
+    get_arguments(context, guild_id, ArgumentStatus::NotchTaken).await
+}
+
+async fn get_arguments(context: &Context, guild_id: GuildId, status: ArgumentStatus)
+                       -> Result<Vec<Argument>, Box<dyn Error + Send + Sync>> {
     let mut data = context.data.write().await;
     let database  = &*data.get_mut::<DBConnection>()
                           .expect("Unable to get db connection in command")
                           .clone();
 
+    let string_status = status.as_str().to_string();
     let guild_id = i64::from(guild_id);
-    let in_progress = ArgumentStatus::InProgress.as_str().to_string();
     let db_response: Result<Vec<DBArgument>, sqlx::Error> = sqlx::query_as!(
         DBArgument,
         r#"SELECT
@@ -69,7 +79,7 @@ pub async fn get_open_arguments(context: &Context, guild_id: GuildId)
         FROM arguments
         WHERE guild_id = $1 AND status = $2"#,
         guild_id,
-        in_progress
+        string_status
     )
         .fetch_all(database)
         .await;

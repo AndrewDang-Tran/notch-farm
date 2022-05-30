@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row};
 use std::{fmt, str::FromStr};
-use std::error::Error;
 use serde::de::StdError;
 use serenity::model::id::{GuildId, UserId};
 
