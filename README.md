@@ -3,9 +3,9 @@ Discord bot for managing and tracking who won internet arguments. Stores argumen
 server (guild). 
 
 #### Discord Commands
-- [ ] `~notch help` - help text
-- [ ] `~notch argument @otherUser "{description}"` - starts or proposes an internet argument with 
+- [x] `~notch help` - help text
+- [x] `~notch argument @otherUser "{description}"` - starts or proposes an internet argument with 
 another~user with the given description
-- [ ] `~notch arguments` - show all open arguments
-- [ ] `~notch take_your_notch {argument_id}` - allows the argument to be taken by other member
-- [ ] `~notch leaderboard` - shows ordered list of notch counts in server
+- [x] `~notch arguments` - show all open arguments
+- [x] `~notch take_your_notch {argument_id}` - allows the argument to be taken by other member
+- [x] `~notch leaderboard` - shows ordered list of notch counts in server
