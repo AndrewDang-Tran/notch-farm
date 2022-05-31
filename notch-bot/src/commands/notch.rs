@@ -42,7 +42,7 @@ pub async fn argument(context: &Context, message: &Message, mut args: Args) -> C
         return Ok(());
     }
     let guild_id_option = message.guild_id;
-    if let None = guild_id_option {
+    if guild_id_option.is_none() {
         message
             .channel_id
             .say(&context.http, MISSING_GUILD_ID)

@@ -105,7 +105,7 @@ async fn get_arguments(
         Ok(db_arguments) => {
             let argument_results = db_arguments
                 .into_iter()
-                .map(|db_a| Argument::from_db(db_a))
+                .map(Argument::from_db)
                 .collect::<Result<Vec<Argument>, ArgumentStatusParseError>>();
 
             match argument_results {
